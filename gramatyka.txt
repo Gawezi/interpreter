@@ -1,0 +1,102 @@
+program                 = "program" "{" { class_definition | function_definition } "}"
+
+class_definition        = "class" id class_body
+
+class_body              = "{" constructor { init_instruction | function_definition } "}"
+
+constructor             = "def" "init"  parameters  instructions_block
+
+function_definition     = "def" function_type id " parameters  instructions_block
+
+function_type           = type
+                        | "void"
+
+parameters              ="(" [ parameter { "," parameter } ]")"
+
+parameter               = type id
+
+instructions_block      = "{" { instruction } "}"
+
+instruction             = if_instruction
+	                | while_instruction
+                        | flat_init_instruction
+			| id_instruction
+                        | return_instruction
+ 
+if_instruction          = "if" condition instructions_block [ "else" instructions_block ]
+
+while_instruction       = "while" condition instructions_block
+
+flat_init_instruction   = flat_type rest_init_instruction
+
+id_instruction          = id ( rest_init_instruction 
+                             | rest_assign_instruction 
+                             | rest_function_call 
+                             | rest_object_call )
+
+init_instruction        = type rest_init_instruction
+
+rest_init_instruction   = id [ assignmentOperator expression ] ";"
+
+rest_assign_instruction = assignmentOperator expresion ";"
+
+rest_function_call      = "(" arguments ")" ";"
+
+rest_object_call        = "." id [  arguments  ] ";"
+
+return_instruction      = "return" [ expression ] ";"
+
+condition               = "(" expression ")"
+
+arguments               = "(" [ expression { "," expression } ] ")"
+
+expression              = conjunction { "or" conjunction }
+
+conjuction              = relation { "and" relation }
+
+relation                = addition { relativeOperator addition }
+
+addition                = term { additiveOperator term }
+
+term                    = negation { multiplicativeOperator negation }
+
+negation                = [ "not" ] factor
+
+factor                  = literal
+                        | "(" expression ")"
+                        | id_factor
+	
+literal                 = boolLiteral 
+                        | intLiteral 
+                        | stringLiteral
+
+boolLiteral             = "false" 
+                        | "true"
+
+intLiteral              = "0"
+                        | [ "-" ] notZeroDigit { digit }
+
+stringLiteral           = "[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]*"
+
+id_factor                = id [ ( rest_function_call | rest_object_call ) ]
+
+type                    = flatType
+			| id
+
+flatType                = "int"
+                        | "bool"
+
+id                      = letter { digit | leter }
+
+letter                  = "A" | "B" | "C" | "D" | "E" | "F" | "G"
+                        | "H" | "I" | "J" | "K" | "L" | "M" | "N"
+                        | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
+                        | "V" | "W" | "X" | "Y" | "Z" | "a" | "b"
+                        | "c" | "d" | "e" | "f" | "g" | "h" | "i"
+                        | "j" | "k" | "l" | "m" | "n" | "o" | "p"
+                        | "q" | "r" | "s" | "t" | "u" | "v" | "w"
+                        | "x" | "y" | "z"
+
+notZeroDigit            = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"   
+
+digit                   = "0" | notZeroDigit
