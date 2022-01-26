@@ -16,13 +16,15 @@ class Lexer:
 
     def get_next_symbol(self):
         if(self.buffored_symbol):
-            return self.buffored_symbol
+            symbol=self.buffored_symbol
+            self.buffored_symbol=""
+            return symbol
         self.position+=1
         return self.code_reader.get_char()
         
 
     def get_next_token(self):
-        if(self.next_token):
+        if(self.next_token is not None):
             token=self.next_token
             self.next_token=None
             return token
@@ -33,8 +35,11 @@ class Lexer:
         self.next_token=token
 
     def build_next_token(self):
-        if(self.code_reader.get_char()==""):
+        ch=""
+        if((ch:=self.code_reader.get_char())==""):
             return Token(Token.Type.EndOfFile)
+        self.code_reader.give_char_back(ch)
+        self.position-=1
         
         self.ignore()
         if(self.symbol.isalpha()):
@@ -93,6 +98,8 @@ class Lexer:
         if(second_symbol in signs and first_symbol in signs):
             return Token(self.map_string_to_token_type(first_symbol+second_symbol), first_symbol+second_symbol,self.line, self.position)
         elif(not second_symbol in signs):
+            self.code_reader.give_char_back(second_symbol)
+            self.position-=1
             return Token(self.map_string_to_token_type(first_symbol),first_symbol,self.line, self.position-1)
 
             
@@ -107,10 +114,10 @@ class Lexer:
         while(self.symbol.isspace() or self.symbol=='\n' or self.symbol=='\r' or self.symbol=='#'):
             if(self.symbol=='#'):
                 self.handle_comment()
-            elif (self.symbol.isspace()):
-                self.handle_space()
-            else:
+            elif (self.symbol=='\n' or self.symbol=='\r'):
                 self.handle_end_of_line()
+            else:
+                self.handle_space()
 
     def handle_space(self):
         while(self.symbol.isspace()):
@@ -123,13 +130,12 @@ class Lexer:
 
     def handle_end_of_line(self):
         self.line+=1
-        self.position+=1
+        self.position=0
         self.symbol=self.get_next_symbol()
 
 #endregion    
 
     def map_string_to_token_type(self, str):
-        "mapujemy typ zeby sie zgadzal"
         dict={"program": Token.Type.Program,
         "class": Token.Type.Class,
         "def": Token.Type.Def,
@@ -168,12 +174,15 @@ class Lexer:
         ".":Token.Type.Dot,
         "init":Token.Type.Init
         }
-        return dict[str]
+        type=dict.get(str)
+        if(type is None):
+            type=Token.Type.Identifier
+        return type
 
 
 reserved={
-        "PROGRAM",
-        "MAIN",
+        "program",
+        "main",
         "return",
         "if",
         "else",
@@ -184,7 +193,9 @@ reserved={
         "false",
         "int",
         "bool",
-        "print"
+        "print_int",
+        "print_bool",
+        "print_string"
 }
 
 signs={
@@ -200,7 +211,8 @@ signs={
         "/",
         "!",
         "=",
-        "*"
+        "*",
+        "%"
 }
 
 splitters={

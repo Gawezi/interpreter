@@ -1,6 +1,5 @@
 from ParserModule.instructions import function_call_instruction
-from parser import Node
-from instructions import function_call
+from ParserModule.node_interface import Node
 
 class expression(Node):
     def accept_validator(self,validator_visitor, validator_context):

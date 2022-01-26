@@ -1,6 +1,6 @@
 from error_handler import error_handler
 from LexerModule.lexer import Lexer
-from ParserModule.parser import Parser
+from ParserModule.parser_instance import Parser
 from ValidatorModule.validator import validator
 from ExecutorModule.executor import executor
 from source_reader import file_reader
@@ -18,5 +18,6 @@ class interpreter:
             execut.execute_program(valid_program)
             return True
 
-        except:
+        except Exception as e:
+            print(e)
             return False

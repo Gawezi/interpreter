@@ -1,4 +1,4 @@
-from parser import Node
+from ParserModule.node_interface import Node
 
 class Definition(Node):
     pass

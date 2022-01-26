@@ -1,5 +1,5 @@
 from ParserModule.definitions import *
-from ParserModule.parser import program_instance
+from ParserModule.parser_instance import program_instance
 from ValidatorModule.defined_objects import defined_function
 
 class valid_class:

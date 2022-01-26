@@ -1,0 +1,11 @@
+program
+{
+    #tego nie czytamy
+    def void main()
+    {
+        int a;
+        a=1;
+        printint(a);
+        return;
+    }
+}

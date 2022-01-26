@@ -19,7 +19,7 @@ class executor(IVisitor):
     def execute_function(self, function_definition:function_definition, scope_context:executor_context):
         try:
             if(function_definition.name in std_functions):
-                print(scope_context.variables.values[0].value)
+                print(str(scope_context.variables.values[0].value))
             if(function_definition in scope_context.classes.keys()):
                 self.execute_instructions_block(function_definition.instructions, scope_context)
                 v=exe_variable()

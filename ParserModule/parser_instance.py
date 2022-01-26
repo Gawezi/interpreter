@@ -1,10 +1,10 @@
-from definitions import *
-from expressions import *
-from instructions import *
+from ParserModule.definitions import *
+from ParserModule.expressions import *
+from ParserModule.instructions import *
 from LexerModule.token import Token
+from LexerModule.lexer import Lexer
+from error_handler import error_handler
 
-class Node:
-    pass
 
 class program_instance:
     def __init__(self, functions, classes):
@@ -13,7 +13,7 @@ class program_instance:
 
 
 class Parser:
-    def __init__(self, lexer, error_handler):
+    def __init__(self, lexer: Lexer, error_handler:error_handler):
         self.lexer=lexer
         self.error_handler=error_handler
         self.functions=[]
@@ -29,10 +29,10 @@ class Parser:
         functions=[]
         classes=[]
         definition=None
-        while (definition:=self.try_parse_class() is not None ) or (definition:=self.try_parse_function() is not None):
-            if(type(definition)==class_definition):
+        while ((definition:=self.try_parse_class()) is not None ) or ((definition:=self.try_parse_function()) is not None):
+            if(type(definition) is class_definition):
                 classes.append(definition)
-            if(type(definition)==function_definition):
+            if(type(definition) is function_definition):
                 functions.append(definition)
         self.must_be_with_exception(Token.Type.CurlyCloseBracket)
         if(not self.error_happened):
@@ -70,7 +70,7 @@ class Parser:
         return class_definition(name,constructor, functions, properties)
 
     def try_parse_function(self):
-        if( not self.check_next_token(Token.Type.Def)):
+        if( not self.may_be(Token.Type.Def)):
             return None 
 
         self.must_be_list([Token.Type.Int, Token.Type.Void,Token.Type.Bool,Token.Type.Identifier])
@@ -90,7 +90,8 @@ class Parser:
     def parse_parameters(self):
         self.must_be_with_exception(Token.Type.RoundOpenBracket)
         parameters=[]
-        if(not(self.may_be(Token.Type.Int) or self.may_be(Token.Type.Bool) or self.may_be(Token.Type.Identifier))):
+        if(not self.may_be_with_list([Token.Type.Int, Token.Type.Bool, Token.Type.Identifier])):
+            self.must_be_with_exception(Token.Type.RoundCloseBracket)
             return parameters
 
         type=self.lexer.current_token.type.value
@@ -106,7 +107,7 @@ class Parser:
 
             for param in parameters:
                 if param.name==name:
-                    self.error_handler.handle_fatal_error("Invalid name: line"+self.lexer.current_token.line+". Parameter with name "+name +" already exists.")
+                    self.error_handler.handle_fatal_error("Invalid name: line"+self.lexer.current_token.line+". Parameter with name "+str(name +" already exists."))
             parameters.append(parameter(name,type))
         self.must_be_with_exception(Token.Type.RoundCloseBracket)
         
@@ -131,7 +132,7 @@ class Parser:
         self.must_be_with_exception(Token.Type.RoundOpenBracket)
         condition=self.try_parse_expression()
         if(condition is None):
-            self.error_handler.handle_fatal_error("Parsing if condition was not succesfull in line: "+self.lexer.current_token.line+ " ,position: "+self.lexer.current_token.position)
+            self.error_handler.handle_fatal_error("Parsing if condition was not succesfull in line: "+str(self.lexer.current_token.line)+ " ,position: "+str(self.lexer.current_token.position))
 
         self.must_be_with_exception(Token.Type.RoundCloseBracket)
 
@@ -150,7 +151,7 @@ class Parser:
 
         condition=self.try_parse_expression()
         if(condition is None):
-            self.error_handler.handle_fatal_error("Parsing while condition was not succesfull in line: "+self.lexer.current_token.line+ " ,position: "+self.lexer.current_token.position)
+            self.error_handler.handle_fatal_error("Parsing while condition was not succesfull in line: "+str(self.lexer.current_token.line)+ " ,position: "+str(self.lexer.current_token.position))
 
         self.must_be_with_exception(Token.Type.RoundCloseBracket)
 
@@ -161,7 +162,8 @@ class Parser:
         return True
 
     def try_parse_flat_init_instruction(self,instructions):
-        if(not self.may_be(Token.Type.Int) or self.may_be(Token.Type.Bool)):
+
+        if(not self.may_be_with_list([Token.Type.Int, Token.Type.Bool])):
             return False
         type=self.lexer.current_token.type.value
         self.must_be_with_exception(Token.Type.Identifier)
@@ -170,8 +172,8 @@ class Parser:
         if(self.may_be(Token.Type.Assign)):
             express=self.try_parse_expression()
             if(express is None):
-                self.error_handler.handle_fatal_error("Invalid assign expression: line"+self.lexer.current_token.line+". Parameter with name "+name +" already exists.")
-            self.must_be_with_exception(Token.Type.Semicolon)
+                self.error_handler.handle_fatal_error("Invalid assign expression: line"+str(self.lexer.current_token.line)+". Parameter with name "+str(name) +" already exists.")
+        self.must_be_with_exception(Token.Type.Semicolon)
         instructions.append(variable_declaration_instruction(name,type,express))
         return True
 
@@ -186,7 +188,7 @@ class Parser:
             if(self.may_be(Token.Type.Assign)):
                 expres=self.try_parse_expression()
                 if(expres==None):
-                    self.error_handler.handle_fatal_error("Invalid assign: line"+self.lexer.current_token.line+". Parameter with name "+name +" already exists.")
+                    self.error_handler.handle_fatal_error("Invalid assign: line"+str(self.lexer.current_token.line)+". Parameter with name "+str(name) +" already exists.")
             self.must_be_with_exception(Token.Type.Semicolon)
             instructions.append(variable_declaration_instruction(name,token.type.value,expres))
             return True
@@ -194,7 +196,7 @@ class Parser:
         if(self.may_be(Token.Type.Assign)):
             expres=self.try_parse_expression()
             if(expres==None):
-                    self.error_handler.handle_fatal_error("Invalid assign: line"+self.lexer.current_token.line)
+                    self.error_handler.handle_fatal_error("Invalid assign: line"+str(self.lexer.current_token.line))
             self.must_be_with_exception(Token.Type.Semicolon)
             instructions.append(assignment_instruction(token.value,expres))
             return True
@@ -213,14 +215,14 @@ class Parser:
             args=self.parse_arguments()
             self.must_be_with_exception(Token.Type.RoundCloseBracket)
             self.must_be_with_exception(Token.Type.Semicolon)
-            instructions.append(method_call_instruction(token.value,function_call(name,args)))
+            instructions.append(method_call_instruction(token.value,function_call_instruction(name,args)))
             return True
         
         return False
 
 
     def try_parse_return_instruction(self,instructions):
-        if(self.may_be(Token.Type.Return)):
+        if(not self.may_be(Token.Type.Return)):
             return False
 
         express=None
@@ -238,7 +240,7 @@ class Parser:
         express=None
         while((express:=self.try_parse_expression()) is not None):
             arguments.append(express)
-            if(not self.may_be(Token.Type.Coma)):
+            if(not self.may_be(Token.Type.Comma)):
                 break        
         return arguments
 
@@ -253,7 +255,7 @@ class Parser:
         while(self.may_be(Token.Type.Or)):
             right_express=self.try_parse_and_expression()
             if(right_express is None):
-                    self.error_handler.handle_fatal_error("Invalid 'and' expression: line"+self.lexer.current_token.line)
+                    self.error_handler.handle_fatal_error("Invalid 'and' expression: line"+str(self.lexer.current_token.line))
             left_express=or_expression(left_express,right_express)
 
         return left_express
@@ -266,7 +268,7 @@ class Parser:
         while(self.may_be(Token.Type.And)):
             right_express=self.try_parse_relative_expression()
             if(right_express is None):
-                    self.error_handler.handle_fatal_error("Invalid 'relative' expression: line"+self.lexer.current_token.line)
+                    self.error_handler.handle_fatal_error("Invalid 'relative' expression: line"+str(self.lexer.current_token.line))
             left_express=and_expression(left_express,right_express)
 
         return left_express
@@ -276,11 +278,11 @@ class Parser:
         if(left_express is None):
             return None
         
-        while(self.may_be(Token.Type.Less) or self.may_be(Token.Type.Greater) or self.may_be(Token.Type.LessOrEqual) or self.may_be(Token.Type.GreaterOrEqual) or self.may_be(Token.Type.NotEqual) or self.may_be(Token.Type.Equal)):
+        while(self.may_be_with_list([Token.Type.Less,Token.Type.Greater,Token.Type.LessOrEqual,Token.Type.GreaterOrEqual,Token.Type.NotEqual,Token.Type.Equal])):
             type=self.lexer.current_token.type.value
             right_express=self.try_parse_additive_expression()
             if(right_express is None):
-                    self.error_handler.handle_fatal_error("Invalid 'additive' expression: line"+self.lexer.current_token.line)
+                    self.error_handler.handle_fatal_error("Invalid 'additive' expression: line"+str(self.lexer.current_token.line))
             left_express=relative_expression(left_express,right_express,type)
         return left_express
 
@@ -290,13 +292,13 @@ class Parser:
             return None
         
         #is_additive
-        while(self.may_be(Token.Type.Plus) or self.may_be(Token.Type.Minus)):
+        while(self.may_be_with_list([Token.Type.Plus, Token.Type.Minus])):
             type=self.lexer.current_token.type.value
             right_express=self.try_parse_multiplicative_expression()
             if(right_express is None):
-                    self.error_handler.handle_fatal_error("Invalid 'multiply' expression: line"+self.lexer.current_token.line)
+                    self.error_handler.handle_fatal_error("Invalid 'multiply' expression: line"+str(self.lexer.current_token.line))
             left_express=additive_expression(left_express,right_express,type)
-        return True,left_express
+        return left_express
 
     def try_parse_multiplicative_expression(self):
         left_express=self.try_parse_negation_expression()
@@ -304,18 +306,18 @@ class Parser:
             return None
         
         #is_multiply
-        while(self.may_be(Token.Type.Multiplication) or self.may_be(Token.Type.Division) or self.may_be(Token.Type.Modulo)):
+        while(self.may_be_with_list([Token.Type.Multiplication, Token.Type.Division,Token.Type.Modulo])):
             type=self.lexer.current_token.type.value
             right_express=self.try_parse_negation_expression()
             if(right_express is None):
-                    self.error_handler.handle_fatal_error("Invalid 'negation' expression: line"+self.lexer.current_token.line)
+                    self.error_handler.handle_fatal_error("Invalid 'negation' expression: line"+str(self.lexer.current_token.line))
             left_express=multiplicative_expression(left_express,right_express,type)
         return left_express
 
     def try_parse_negation_expression(self):
         is_negated=self.may_be(Token.Type.Not)
         factor=None
-        if((factor:=self.try_parse_literal() is None) and (factor:=self.try_parse_bracket_expression() is None) and (factor:=self.try_parse_identifier_expression() is None)):
+        if(((factor:=self.try_parse_literal()) is None) and ((factor:=self.try_parse_bracket_expression()) is None) and ((factor:=self.try_parse_identifier_expression()) is None)):
             return None
         return not_expression(factor, is_negated)
 
@@ -327,7 +329,7 @@ class Parser:
         
         express=self.try_parse_expression()
         if(express is None):
-            self.error_handler.handle_fatal_error("Invalid 'bracket' expression: line"+self.lexer.current_token.line)
+            self.error_handler.handle_fatal_error("Invalid 'bracket' expression: line"+str(self.lexer.current_token.line))
         self.must_be_with_exception(Token.Type.RoundCloseBracket)
         return express
 
@@ -351,7 +353,7 @@ class Parser:
                 return expres
             args=self.parse_arguments()
             self.must_be_with_exception(Token.Type.RoundCloseBracket)
-            expres=method_call_expression(token.value, function_call(name,args))
+            expres=method_call_expression(token.value, function_call_expression(name,args))
             return expres
         
         expres=variable_expression(token.value)
@@ -379,7 +381,7 @@ class Parser:
         minus=self.may_be(Token.Type.Minus)
         number=self.may_be(Token.Type.IntLiteral)
         if(minus and not number):
-            self.error_handler.handle_fatal_error("Invalid 'minus' before string or bool: line"+self.lexer.current_token.line)
+            self.error_handler.handle_fatal_error("Invalid 'minus' before string or bool: line"+str(self.lexer.current_token.line))
         if(not number):
             return None
         
@@ -405,7 +407,7 @@ class Parser:
 
 
     def try_parse_property(self):
-        if(not self.may_be(Token.Type.Int) or not self.may_be(Token.Type.Bool) or not self.may_be(Token.Type.Identifier)):
+        if(not self.may_be_with_list([Token.Type.Int,Token.Type.Bool,Token.Type.Identifier])):
             return None
 
         type=self.lexer.current_token.Type.value
@@ -421,7 +423,7 @@ class Parser:
         if(literal is None):
             literal=self.try_parse_bool_literal()
         if(literal is None):
-            self.error_handler.handle_fatal_error("Property of type: "+type+ " cannot be initialized. Line: "+self.lexer.current_token.line+" ,position: "+self.lexer.current_token.position)
+            self.error_handler.handle_fatal_error("Property of type: "+str(type)+ " cannot be initialized. Line: "+str(self.lexer.current_token.line)+" ,position: "+str(self.lexer.current_token.position))
     
         self.must_be_with_exception(Token.Type.Semicolon)
         return variable_declaration_instruction(name,type,literal)
@@ -436,6 +438,14 @@ class Parser:
         self.lexer.give_token_back(token)
         return False
 
+    def may_be_with_list(self,token_types:list[Token.Type]):
+        token=self.lexer.get_next_token()
+        for type in token_types:
+            if(token.type==type):
+                return True
+        self.lexer.give_token_back(token)
+        return False
+
     def must_be_list(self, token_types):
         token=self.lexer.get_next_token()
         flag=False
@@ -444,12 +454,12 @@ class Parser:
                 flag=True
                 break
         if(not flag):
-            self.error_handler.handle_fatal_error("Invalid token type in line: "+token.line + " , position: "+token.position)   
+            self.error_handler.handle_fatal_error("Invalid token type in line: "+str((token.line)) + " , position: "+str(token.position))   
 
 
     def must_be_with_exception(self,token_type):
         token=self.lexer.get_next_token()
         if(token.type!=token_type):
-            self.error_handler.handle_fatal_error("Invalid token type in line: "+token.line + " , position: "+token.position)
+            self.error_handler.handle_fatal_error("Invalid token type in line: "+str((token.line)) + " , position: "+str(token.position))
 
 #endregion
