@@ -88,10 +88,10 @@ class relative_expression(expression):
         executor_visitor.visit_relative_expression(executor_visitor, executor_context)
 
 class function_call_expression(expression):
-    def __init__(self, name, args):
+    def __init__(self, name, arguments):
         super().__init__()
         self.name=name
-        self.args=args
+        self.arguments=arguments
 
     def accept_validator(self,validator_visitor, validator_context):
         validator_visitor.visit_function_call_expression(validator_visitor, validator_context)
@@ -103,7 +103,7 @@ class method_call_expression(expression):
     def __init__(self, name, function_call_instruction:function_call_instruction):
         super().__init__()
         self.object_name=name
-        self.function_call_instruction=function_call_instruction
+        self.function=function_call_instruction
 
     def accept_validator(self,validator_visitor, validator_context):
         validator_visitor.visit_method_call_expression(validator_visitor, validator_context)
