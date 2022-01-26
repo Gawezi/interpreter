@@ -351,7 +351,7 @@ class Parser:
                 return expres
             args=self.parse_arguments()
             self.must_be_with_exception(Token.Type.RoundCloseBracket)
-            expres=method_call_instruction(token.value, function_call(name,args))
+            expres=method_call_expression(token.value, function_call(name,args))
             return expres
         
         expres=variable_expression(token.value)

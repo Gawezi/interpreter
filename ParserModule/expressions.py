@@ -1,3 +1,4 @@
+from ParserModule.instructions import function_call_instruction
 from parser import Node
 from instructions import function_call
 
@@ -97,6 +98,18 @@ class function_call_expression(expression):
 
     def accept_executor(self,executor_visitor, executor_context):
         executor_visitor.visit_function_call_expression(executor_visitor, executor_context)
+
+class method_call_expression(expression):
+    def __init__(self, name, function_call_instruction:function_call_instruction):
+        super().__init__()
+        self.object_name=name
+        self.function_call_instruction=function_call_instruction
+
+    def accept_validator(self,validator_visitor, validator_context):
+        validator_visitor.visit_method_call_expression(validator_visitor, validator_context)
+
+    def accept_executor(self,executor_visitor, executor_context):
+        executor_visitor.visit_method_call_expression(executor_visitor, executor_context)
 
 class property_call_expression(expression):
     def __init__(self, object_name, property_name):
