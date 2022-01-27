@@ -1,0 +1,38 @@
+program
+{
+   class vector
+   {
+      def init(int x, int y)
+      {
+         X = x;
+         Y = y;
+      }
+
+      int X;
+      int Y;
+
+    def int Pitagoras()
+    {
+        return X*X+Y*Y;
+    }
+
+
+   }
+
+    def int oblicz(int x, int y)
+    {
+        x=2*x+y;
+        return x;
+    }
+   def void main()
+   {
+        vector v=vector(2,4);
+        int a = v.Pitagoras();
+        printstring("wektor <2,4> ma dlugosc:");
+        printint(a);
+        printint(oblicz(2,1));
+   }
+}
+
+
+

@@ -6,6 +6,7 @@ class validator_context:
         if(validator_context is not None):
             self.defined_functions=create_copy_of_dict(validator_context.defined_functions)
             self.defined_variables=create_copy_of_dict(validator_context.defined_variables)
-        self.defined_functions={}
-        self.defined_variables={}
+        else:
+            self.defined_functions={}
+            self.defined_variables={}
 

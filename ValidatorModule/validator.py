@@ -1,9 +1,5 @@
-from copyreg import constructor
-from multiprocessing import Condition
-
-from idna import valid_contexto
-from ParserModule.expressions import additive_expression, and_expression, bool_literal_expression, function_call_expression, int_literal_expression, method_call_expression, multiplicative_expression, not_expression, or_expression, property_call_expression, relative_expression, string_literal_expression, variable_expression
-from ParserModule.instructions import assignment_instruction, function_call_instruction, if_else_instruction, instruction, method_call_instruction, return_instruction, variable_declaration_instruction, while_instruction
+from ParserModule.expressions import *
+from ParserModule.instructions import *
 from ValidatorModule.defined_objects import *
 from ValidatorModule.validator_context import *
 from ValidatorModule.valid_objects import *
@@ -109,11 +105,12 @@ class validator(IVisitor):
             self.error_handler.stop_everything()
         
 
+ 
         classes={}
         functions={}
-        for key, value in self.defined_classes.keys():
+        for key in self.defined_classes.keys():
             classes[key]=valid_class(self.defined_classes[key])
-        for key, value in self.defined_functions.keys():
+        for key in self.defined_functions.keys():
             functions[key]=valid_function(self.defined_functions[key])
 
         return valid_program(classes,functions)
@@ -128,7 +125,8 @@ class validator(IVisitor):
 
         defined_properties={}
 
-        for property in class_definition.properties:
+        for key in class_definition.properties.keys():
+            property=class_definition.properties[key]
             if(not self.is_type_defined(property.type)):
                 self.error_handler.add_error("Declaration of property"+ property.name + "is with unknown type"+ property.type +" in class "+ class_definition.name)
             if(property.name in defined_properties.keys()):
@@ -138,10 +136,11 @@ class validator(IVisitor):
                 expression_type=property.expression.accept_validator(self, validator_context())
                 if(property.type!= expression_type):
                     self.error_handler.add_error("Cannot assign expression of type"+expression_type+" to property"+property.name+ "in class "+ class_definition.name)
-            defined_properties[property.name, defined_variable(property.name,property.type,True)]
+            defined_properties[property.name]=defined_variable(property.name,property.type,True)
         
         defined_methods={}
-        for property in class_definition.functions:
+        for key in class_definition.functions.keys():
+            property=class_definition.functions[key]
             if(not self.is_type_defined(property.type) and property.type!="void"):
                 self.error_handler.add_error("Declaration of method"+ property.name + "is with unknown type"+ property.type +" in class "+ class_definition.name)
             if(property.name in defined_methods.keys()):
@@ -176,10 +175,12 @@ class validator(IVisitor):
             if(not parameter.name in defined_properties.keys() and not parameter.name in constructor_context.defined_variables.keys()):
                 constructor_context.defined_variables[parameter.name]=defined_variable(parameter.name, parameter.type,True)
         for key in defined_properties.keys(): 
-            function.validator_context.defined_variables[key]=defined_properties[key]
+            constructor_context.defined_variables[key]=defined_properties[key]
 
         if(is_ok):
-            self.defined_classes[class_definition.name]=defined_class(class_definition, defined_methods,defined_properties, constructor_context)
+            self.defined_classes[class_definition.name]=defined_class(class_definition, constructor_context)
+            self.defined_classes[class_definition.name].defined_methods=defined_methods
+            self.defined_classes[class_definition.name].defined_properties=defined_properties
 
     def validate_function_definition_header(self, function_definition: function_definition):
         if(not self.is_type_defined(function_definition.type) and function_definition.type!="void"):
@@ -200,16 +201,16 @@ class validator(IVisitor):
                 self.error_handler.add_error(f"Multiple parameters with name {parameter.name} in function {function_definition.name}")
             context.defined_variables[parameter.name]=defined_variable(parameter.name,parameter.type,True)
         if(not is_redefinition):
-            self.defined_functions[function_definition.name, defined_function(function_definition,context )]
+            self.defined_functions[function_definition.name]= defined_function(function_definition,context )
 
     def validate_main(self):
         if("main" not in self.defined_functions.keys()):
             self.error_handler.add_error(f"No main function")
         main_function=self.defined_functions["main"]
-        if(main_function is not None and main_function.type!="void"):
+        if(main_function is None or main_function.type!="void"):
             self.error_handler.add_error(f"Main function can bo only of type void")
         
-        if(main_function is not None and main_function.parameters is not None):
+        if(main_function is None or len(main_function.parameters) >0):
             self.error_handler.add_error("Main function cannot have parameters")
     
     def validate_instructions_block(self,instructions: list[instruction], validator_context:validator_context):
@@ -218,7 +219,7 @@ class validator(IVisitor):
 
 #region INSTRUCTION_VISITORS
     def visit_var_declaration_instruction(self,variable_declaration: variable_declaration_instruction, scope_context:validator_context):
-        if( not self.is_type_defined(variable_declaration.type)):
+        if(not self.is_type_defined(variable_declaration.type)):
             self.error_handler.add_error(f"Variable {variable_declaration.name} is unknown type {variable_declaration.type}")
         
         if(variable_declaration.name in scope_context.defined_variables.keys()):
@@ -236,18 +237,19 @@ class validator(IVisitor):
 
 
     def visit_assignment_instruction(self,assignment: assignment_instruction, scope_context:validator_context):
-        if(assignment.variable_name not in scope_context.defined_variables.keys):
+        if(assignment.variable_name not in scope_context.defined_variables.keys()):
             self.error_handler.add_error(f"Assignment to undefined variable {assignment.variable_name}")
         
         variable=scope_context.defined_variables[assignment.variable_name]
         if(variable is None):
             return
-        
+
         expression_type = assignment.expression.accept_validator(self, scope_context)
         if(variable.type != expression_type):
             self.error_handler.add_error(f"Not matching types of variable {variable.name} with type {variable.type} and corresponding to it assignment expression of type {expression_type}")
 
         variable.is_initialized=True
+
 
 
     def visit_function_call_instruction(self,function_call:function_call_instruction, scope_context:validator_context):
@@ -318,9 +320,11 @@ class validator(IVisitor):
 
     def visit_not_expression(self,not_expression:not_expression, scope_context:validator_context):
         negated_type=not_expression.left.accept_validator(self,scope_context)
-        if(negated_type!="bool"):
-            self.error_handler(f"Not operator can only be applied to the bool type")
-        return "bool"
+        if(not_expression.is_negated and negated_type!="bool"):
+            self.error_handler.add_error(message=f"Not operator can only be applied to the bool type")
+        if(not_expression.is_negated):
+            return "bool"
+        return negated_type
     def visit_property_call_expression(self,variable_expression:property_call_expression, scope_context:validator_context):
         if(variable_expression.name not in scope_context.defined_variables.keys):
             self.error_handler.add_error(f"Undefined variable {variable_expression.name}")
@@ -347,21 +351,22 @@ class validator(IVisitor):
         if(variable_expression.name not in scope_context.defined_variables.keys()):
             self.error_handler.add_error(f"Variable {variable_expression.name} is undefined")
         variable=scope_context.defined_variables[variable_expression.name]
+        type=variable.type
         if(variable is None):
             return ""
         if(not variable.is_initialized):
             self.error_handler.add_error(f"Variable {variable_expression.name} is uninitialized")
-        return variable.type
+        return type
 
     def visit_method_call_expression(self,method_call_expression: method_call_expression, scope_context:validator_context):
         self.validate_method_call(method_call_expression, scope_context)
         variable_type=scope_context.defined_variables[method_call_expression.object_name].type
-        return self.defined_classes[variable_type].defined_methods[method_call_expression.function_call_instruction.name]
+        return self.defined_classes[variable_type].functions[method_call_expression.function.name].type
 
     def visit_function_call_expression(self,function_call_expression: function_call_expression, scope_context:validator_context):
         self.validate_function_call(function_call_expression, scope_context)
         if(function_call_expression.name in self.defined_classes.keys()):
-            return self.defined_classes[function_call_expression.name]
+            return self.defined_classes[function_call_expression.name].name
         return scope_context.defined_functions[function_call_expression.name].type
 
     def visit_int_literal_expression(self,int_literal_expression: int_literal_expression, scope_context:validator_context):
@@ -381,7 +386,7 @@ class validator(IVisitor):
             return False
         
         called_function: function_definition=None
-        if(function_call in self.defined_classes.keys()):
+        if(function_call.name in self.defined_classes.keys()):
             called_function=self.defined_classes[function_call.name].constructor
         elif(function_call.name in scope_context.defined_functions.keys()):
             called_function=scope_context.defined_functions[function_call.name]
@@ -405,22 +410,22 @@ class validator(IVisitor):
             self.error_handler.add_error(f"Variable {object_variable.name} is not initialized")
         
         object_class=self.defined_classes[object_variable.type]
-        if(method_call.function.name not in object_class.defined_methods.keys()):
+        if(method_call.function.name not in object_class.functions.keys()):
             self.error_handler.add_error(f"Call undefined method {method_call.function.name} on object {object_variable.name}")
             return False
 
-        self.validate_call_arguments(method_call.function, self.defined_classes[object_variable.type].defined_methods[method_call.function.name],scope_context, True)
+        self.validate_call_arguments(method_call.function, self.defined_classes[object_variable.type].functions[method_call.function.name],scope_context, True)
         return True
 
     def validate_call_arguments(self,function_call: function_call_instruction, function_definition:function_definition, scope_context:validator_context,is_method=False):
         parameters=function_definition.parameters
         arguments=function_call.arguments
-
+        
         for i in range(0,len(parameters)):
             parameter_type=parameters[i].type
             argument_type=arguments[i].accept_validator(self,scope_context)
             if(parameter_type!=argument_type):
-                self.error_handler(f"Argument type {argument_type} is not assignable to parameter type {parameter_type} in {function_call.name}")
+                self.error_handler.add_error(f"Argument type {argument_type} is not assignable to parameter type {parameter_type} in {function_call.name}")
 
     def validate_class_definition(self,defined_class: defined_class):
         self.validate_instructions_block(defined_class.constructor.instructions,validator_context(defined_class.validator_context))

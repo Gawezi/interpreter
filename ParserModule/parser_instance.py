@@ -190,7 +190,7 @@ class Parser:
                 if(expres==None):
                     self.error_handler.handle_fatal_error("Invalid assign: line"+str(self.lexer.current_token.line)+". Parameter with name "+str(name) +" already exists.")
             self.must_be_with_exception(Token.Type.Semicolon)
-            instructions.append(variable_declaration_instruction(name,token.type.value,expres))
+            instructions.append(variable_declaration_instruction(name,token.value,expres))
             return True
         
         if(self.may_be(Token.Type.Assign)):
@@ -317,9 +317,10 @@ class Parser:
     def try_parse_negation_expression(self):
         is_negated=self.may_be(Token.Type.Not)
         factor=None
-        if(((factor:=self.try_parse_literal()) is None) and ((factor:=self.try_parse_bracket_expression()) is None) and ((factor:=self.try_parse_identifier_expression()) is None)):
-            return None
-        return not_expression(factor, is_negated)
+        if(((factor:=self.try_parse_literal()) is not None) or ((factor:=self.try_parse_bracket_expression()) is not None) or ((factor:=self.try_parse_identifier_expression()) is not None)):
+            return factor
+        if(is_negated):
+            return not_expression(factor, is_negated)
 
 
     def try_parse_bracket_expression(self):
@@ -410,7 +411,7 @@ class Parser:
         if(not self.may_be_with_list([Token.Type.Int,Token.Type.Bool,Token.Type.Identifier])):
             return None
 
-        type=self.lexer.current_token.Type.value
+        type=self.lexer.current_token.type.value
         self.must_be_with_exception(Token.Type.Identifier)
         name=self.lexer.current_token.value
 

@@ -9,17 +9,17 @@ class expression(Node):
 
 
 class additive_expression(expression):
-    def __init__(self, type, left,right):
+    def __init__(self, left,right,type):
         super().__init__()
         self.type=type
         self.left=left
         self.right=right
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_additive_expression(validator_visitor, validator_context)
+        return validator_visitor.visit_additive_expression(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_additive_expression(executor_visitor, executor_context)
+        return executor_visitor.visit_additive_expression(self, executor_context)
 
 
 class and_expression(expression):
@@ -29,24 +29,24 @@ class and_expression(expression):
         self.right=right
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_and_expression(validator_visitor, validator_context)
+        return validator_visitor.visit_and_expression(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_and_expression(executor_visitor, executor_context)
+        return executor_visitor.visit_and_expression(self, executor_context)
 
 
 class multiplicative_expression(expression):
-    def __init__(self, type, left,right):
+    def __init__(self, left,right,type):
         super().__init__()
         self.type=type
         self.left=left
         self.right=right
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_multiplicative_expression(validator_visitor, validator_context)
+        return validator_visitor.visit_multiplicative_expression(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_multiplicative_expression(executor_visitor, executor_context)
+        return executor_visitor.visit_multiplicative_expression(self, executor_context)
 
 class not_expression(expression):
     def __init__(self, left, is_negated):
@@ -56,10 +56,10 @@ class not_expression(expression):
         self.right=None
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_not_expression(validator_visitor, validator_context)
+        return validator_visitor.visit_not_expression(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_not_expression(executor_visitor, executor_context)
+        return executor_visitor.visit_not_expression(self, executor_context)
 
 class or_expression(expression):
     def __init__(self, left,right):
@@ -68,23 +68,23 @@ class or_expression(expression):
         self.right=right
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_or_expression(validator_visitor, validator_context)
+        return validator_visitor.visit_or_expression(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_or_expression(executor_visitor, executor_context)
+        return executor_visitor.visit_or_expression(self, executor_context)
 
 class relative_expression(expression):
-    def __init__(self, type, left,right):
+    def __init__(self, left,right,type):
         super().__init__()
         self.type=type
         self.left=left
         self.right=right
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_relative_expression(validator_visitor, validator_context)
+        return validator_visitor.visit_relative_expression(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_relative_expression(executor_visitor, executor_context)
+        return executor_visitor.visit_relative_expression(self, executor_context)
 
 class function_call_expression(expression):
     def __init__(self, name, arguments):
@@ -93,10 +93,10 @@ class function_call_expression(expression):
         self.arguments=arguments
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_function_call_expression(validator_visitor, validator_context)
+        return validator_visitor.visit_function_call_expression(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_function_call_expression(executor_visitor, executor_context)
+        return executor_visitor.visit_function_call_expression(self, executor_context)
 
 class method_call_expression(expression):
     def __init__(self, name, function_call_instruction:function_call_instruction):
@@ -105,10 +105,10 @@ class method_call_expression(expression):
         self.function=function_call_instruction
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_method_call_expression(validator_visitor, validator_context)
+        return validator_visitor.visit_method_call_expression(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_method_call_expression(executor_visitor, executor_context)
+        return executor_visitor.visit_method_call_expression(self, executor_context)
 
 class property_call_expression(expression):
     def __init__(self, object_name, property_name):
@@ -117,20 +117,20 @@ class property_call_expression(expression):
         self.property_name=property_name
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_property_call_expression(validator_visitor, validator_context)
+        return validator_visitor.visit_property_call_expression(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_property_call_expression(executor_visitor, executor_context)
+        return executor_visitor.visit_property_call_expression(self, executor_context)
 
 class bool_literal_expression(expression):
     def __init__(self,value):
         super().__init__()
         self.value=value
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_bool_literal_expression(validator_visitor, validator_context)
+        return validator_visitor.visit_bool_literal_expression(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_bool_literal_expression(executor_visitor, executor_context)
+        return executor_visitor.visit_bool_literal_expression(self, executor_context)
 
 
 class int_literal_expression(expression):
@@ -139,10 +139,10 @@ class int_literal_expression(expression):
         self.value=value
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_int_literal_expression(validator_visitor, validator_context)
+        return validator_visitor.visit_int_literal_expression(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_int_literal_expression(executor_visitor, executor_context)
+        return executor_visitor.visit_int_literal_expression(self, executor_context)
 
 class string_literal_expression(expression):
     def __init__(self,value):
@@ -150,10 +150,10 @@ class string_literal_expression(expression):
         self.value=value
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_string_literal_expression(validator_visitor, validator_context)
+        return validator_visitor.visit_string_literal_expression(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_string_literal_expression(executor_visitor, executor_context)
+        return executor_visitor.visit_string_literal_expression(self, executor_context)
 
 class variable_expression(expression):
     def __init__(self,name):
@@ -161,8 +161,8 @@ class variable_expression(expression):
         self.name=name
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_variable_expression(validator_visitor, validator_context)
+        return validator_visitor.visit_variable_expression(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_variable_expression(executor_visitor, executor_context)
+        return executor_visitor.visit_variable_expression(self, executor_context)
 

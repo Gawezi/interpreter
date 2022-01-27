@@ -14,18 +14,25 @@ class executor(IVisitor):
 
     def execute_program(self,program:valid_program):
         main_function=program.valid_functions["main"]
-        self.execute_function(main_function,executor_context(program.functions, program.classes,{}))
+        context=executor_context()
+        context.functions=program.valid_functions
+        context.classes=program.valid_classes
+        context.variables={}
+        self.execute_function(main_function, context)
 
     def execute_function(self, function_definition:function_definition, scope_context:executor_context):
         try:
+            if(function_definition.name=="Change"):
+                print("kupa")
             if(function_definition.name in std_functions):
-                print(str(scope_context.variables.values[0].value))
-            if(function_definition in scope_context.classes.keys()):
+                print(str(next(iter(scope_context.variables.values())).value))
+            if(function_definition.name in scope_context.classes.keys()):
                 self.execute_instructions_block(function_definition.instructions, scope_context)
                 v=exe_variable()
                 v.type=function_definition.name
                 v.properties=scope_context.variables
-            
+                
+                return v
             self.execute_instructions_block(function_definition.instructions, scope_context)
 
         except ReturnException:
@@ -39,15 +46,20 @@ class executor(IVisitor):
 
 #region INSTRUCTION_VISITORS
     def visit_var_declaration_instruction(self,variable_declaration:variable_declaration_instruction, scope_context:executor_context):
-        var=variable_declaration.expression.accept_executor(self,scope_context)
+        var=None
+        if(variable_declaration.expression is not None):
+            var=variable_declaration.expression.accept_executor(self,scope_context)
         if(var is None):
             var=exe_variable()
+            var.type=variable_declaration.type
+            var.name=variable_declaration.name
         var.type=variable_declaration.type
         var.name=variable_declaration.name
         scope_context.variables[var.name]=var
 
     def visit_assignment_instruction(self,assignment:assignment_instruction, scope_context:executor_context):
         new_val=assignment.expression.accept_executor(self, scope_context)
+        new_val.name=assignment.variable_name
         scope_context.variables[assignment.variable_name]=new_val
 
     def visit_function_call_instruction(self,function_call:function_call_instruction, scope_context:executor_context):
@@ -76,17 +88,19 @@ class executor(IVisitor):
 
 
     def visit_return_instruction(self,return_instruction:return_instruction, scope_context:executor_context):
+        expression_type=None
         if(return_instruction.expression is not None):
             self.variable_to_return=return_instruction.expression.accept_executor(self,scope_context)
             raise ReturnException()
         self.variable_to_return=None
         raise ReturnException()
 
-
     def visit_if_else_instruction(self,if_else_instruction:if_else_instruction, scope_context:executor_context):
         base_vars_names=scope_context.variables.keys()
         condition_val=if_else_instruction.condition.accept_executor(self,scope_context)
-        actual_val=bool(condition_val.value)
+        actual_val=True
+        if(condition_val.value=="false"):
+            actual_val=False
         if(actual_val):
             self.execute_instructions_block(if_else_instruction.if_instructions,scope_context)
         else:
@@ -104,12 +118,16 @@ class executor(IVisitor):
     def visit_while_instruction(self,while_instruction:while_instruction, scope_context:executor_context):
         base_vars_names=scope_context.variables.keys()
         condition_val=while_instruction.condition.accept_executor(self,scope_context)
-        actual_val=bool(condition_val.value)
+        actual_val=True
+        if(condition_val.value=="false"):
+            actual_val=False
         while(actual_val):
             self.execute_instructions_block(while_instruction.instructions,scope_context)
             condition_val=while_instruction.condition.accept_executor(self,scope_context)
-            actual_val=bool(condition_val.value)
-
+            if(condition_val.value=="false"):
+                actual_val=False
+            if(condition_val.value=="true"):
+                actual_val=True
         
         var_names_to_delete=[]
         for key in scope_context.variables.keys():
@@ -132,6 +150,7 @@ class executor(IVisitor):
         exe_var=exe_variable()
         exe_var.type="bool"
         exe_var.value=right_value.value
+        return exe_var
         
 
     def visit_and_expression(self,and_expression:and_expression, scope_context:executor_context):
@@ -146,6 +165,7 @@ class executor(IVisitor):
         exe_var=exe_variable()
         exe_var.type="bool"
         exe_var.value=right_value.value
+        return exe_var
 
 
 
@@ -183,9 +203,9 @@ class executor(IVisitor):
         exe_var=exe_variable()
         exe_var.type="bool"
         if(value):
-            exe_var=="true"
+            exe_var.value="true"
         else:
-            exe_var=="false"
+            exe_var.value="false"
         
         return exe_var
 
@@ -207,7 +227,8 @@ class executor(IVisitor):
         exe=exe_variable()
         exe.type="int"
         exe.value=str(value)
-
+        exe.name=left_val.name
+        return exe
 
 
 
@@ -230,6 +251,8 @@ class executor(IVisitor):
         exe=exe_variable()
         exe.type="int"
         exe.value=str(value)
+        exe.name=left_val.name
+        return exe
 
 
     def visit_not_expression(self,not_expression: not_expression, scope_context:executor_context):
@@ -238,14 +261,15 @@ class executor(IVisitor):
         exe=exe_variable()
         exe.type="bool"
         exe.value==str(not actual_value)
+        return exe
 
     def visit_variable_expression(self,variable_expression:variable_expression, scope_context:executor_context):
-        variable=scope_context.variables[variable_expression.name]
-        return exe_variable(variable)
+        variable=scope_context.variables[variable_expression.name] 
+        return exe_variable(exe_variable=variable)
 
     def visit_property_call_expression(self,property_call_expression:property_call_expression, scope_context:executor_context):
         variable=scope_context.variables[property_call_expression.object_name].properties[property_call_expression.property_name]
-        return exe_variable(variable)
+        return exe_variable(exe_variable=variable)
 
     def visit_method_call_expression(self,method_call_expression:method_call_expression, scope_context:executor_context):
         method=scope_context.classes[scope_context.variables[method_call_expression.object_name].type].methods[method_call_expression.function.name]
@@ -282,16 +306,20 @@ class executor(IVisitor):
         variable=exe_variable()
         variable.type="int"
         variable.value=str(int_literal_expression.value)
+        return variable
 
     def visit_bool_literal_expression(self,bool_literal_expression:bool_literal_expression, scope_context:executor_context):
         variable=exe_variable()
         variable.type="bool"
         variable.value=str(bool_literal_expression.value)
+        return variable
 
     def visit_string_literal_expression(self,string_literal_expression:string_literal_expression, scope_context:executor_context):
         variable=exe_variable()
         variable.type="string"
         variable.value=string_literal_expression.value
+        return variable
+
 #endregion
 
     def execute_call_arguments(self,function_call, function_definition:function_definition, scope_context: executor_context):

@@ -84,7 +84,7 @@ class Lexer:
         return Token(Token.Type.IntLiteral,number,self.line, self.position)
 
     def handle_string(self):
-        str=self.symbol
+        str=""
         self.symbol=self.get_next_symbol()
         while(self.symbol!='"'):
             str+=self.symbol
