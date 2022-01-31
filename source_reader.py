@@ -35,14 +35,14 @@ class file_reader(readerInterface):
         self.text=open(filename).read()
         #text=text[text.find("PROGRAM"):]
 
-    def giveChar(self):
+    def get_char(self):
         if(self.text==""):
             return ""
         ch=self.text[0]
         self.text=self.text[1:]
         return ch
 
-    def getCharBack(self,char):
+    def give_char_back(self,char):
         self.text=char+self.text
 
 

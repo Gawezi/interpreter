@@ -1,0 +1,23 @@
+program
+{
+
+    class czekolada
+    {
+        def init()
+        {
+            x=10;
+        }
+        int x;
+    }
+    def void main()
+    {
+        int a=0;
+        czekolada cz=czekolada();
+        printint(cz.x);
+        while(a<5)
+        {
+            a=a+1;
+            printint(a);
+        }
+    }
+}

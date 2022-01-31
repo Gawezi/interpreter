@@ -1,4 +1,4 @@
-from parser import Node
+from ParserModule.node_interface import Node
 
 
 class instruction(Node):
@@ -16,10 +16,10 @@ class assignment_instruction(instruction):
         self.expression=expression
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_assignment_instruction(validator_visitor, validator_context)
+        validator_visitor.visit_assignment_instruction(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_assignment_instruction(executor_visitor, executor_context)
+        executor_visitor.visit_assignment_instruction(self, executor_context)
 
 class function_call_instruction(instruction):
     def __init__(self,name,arguments):
@@ -27,10 +27,10 @@ class function_call_instruction(instruction):
         self.name=name
         self.arguments=arguments
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_function_call_instruction(validator_visitor, validator_context)
+        validator_visitor.visit_function_call_instruction(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_function_call_instruction(executor_visitor, executor_context)
+        executor_visitor.visit_function_call_instruction(self, executor_context)
 
 
 class if_else_instruction(instruction):
@@ -41,10 +41,10 @@ class if_else_instruction(instruction):
         self.else_instructions=else_instructions
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_if_else_instruction(validator_visitor, validator_context)
+        validator_visitor.visit_if_else_instruction(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_if_else_instruction(executor_visitor, executor_context)
+        executor_visitor.visit_if_else_instruction(self, executor_context)
 
 
 class method_call_instruction(instruction):
@@ -54,10 +54,10 @@ class method_call_instruction(instruction):
         self.function=function
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_method_call_instruction(validator_visitor, validator_context)
+        validator_visitor.visit_method_call_instruction(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_method_call_instruction(executor_visitor, executor_context)
+        executor_visitor.visit_method_call_instruction(self, executor_context)
 
 
 # class property_call_instruction(instruction):
@@ -79,10 +79,10 @@ class return_instruction(instruction):
         self.expression=expression
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_return_instruction(validator_visitor, validator_context)
+        validator_visitor.visit_return_instruction(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_return_instruction(executor_visitor, executor_context)
+        executor_visitor.visit_return_instruction(self, executor_context)
 
 
 class variable_declaration_instruction(instruction):
@@ -93,10 +93,10 @@ class variable_declaration_instruction(instruction):
         self.expression=expression
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_variable_declaration_instruction(validator_visitor, validator_context)
+        validator_visitor.visit_var_declaration_instruction(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_variable_declaration_instruction(executor_visitor, executor_context)
+        executor_visitor.visit_var_declaration_instruction(self, executor_context)
 
 
 class while_instruction(instruction):
@@ -106,7 +106,7 @@ class while_instruction(instruction):
         self.instructions=instructions
 
     def accept_validator(self,validator_visitor, validator_context):
-        validator_visitor.visit_while_instruction(validator_visitor, validator_context)
+        validator_visitor.visit_while_instruction(self, validator_context)
 
     def accept_executor(self,executor_visitor, executor_context):
-        executor_visitor.visit_while_instruction(executor_visitor, executor_context)
+        executor_visitor.visit_while_instruction(self, executor_context)

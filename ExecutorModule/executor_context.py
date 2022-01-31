@@ -2,14 +2,12 @@
 
 from types import ClassMethodDescriptorType
 
+def create_copy_of_dict(dict):
+    return {key: value for key,value in dict.items()}
 
 class executor_context:
-    def __init__(self,functions,classes,variables):
-        self.functions=functions
-        self.classes=classes
-        self.variables=variables
 
-    def __init__(self,context):
-        self.functions=context.functions
-        self.classes=context.classes
-        self.variables=context.variables
+    def __init__(self):
+        self.functions={}
+        self.classes={}
+        self.variables={}

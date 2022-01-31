@@ -1,0 +1,40 @@
+program
+{
+    class Ciasto
+    {
+        def init(int maka, int jajka, int mleko)
+        {
+            Maka=maka;
+            Jajka=jajka;
+            Mleko=mleko;
+        }
+
+        int Maka;
+        int Jajka;
+        int Mleko;
+
+        def int PoliczWageCiasta(int ile)
+        {
+            int waga;
+            waga=Maka+Jajka+Mleko;
+            waga=waga*ile;
+            return waga;
+        }
+
+        def void WypiszSkladniki()
+        {
+            printint(Maka);
+            printint(Jajka);
+            printint(Mleko);
+        }
+    }
+
+    def void main()
+    {
+        Ciasto ciastko = Ciasto(5,2,1);
+        int waga=ciastko.PoliczWageCiasta(4);
+        printstring("4 ciasta waza:");
+        printint(waga);
+        ciastko.WypiszSkladniki();
+    }
+}

@@ -1,0 +1,19 @@
+program
+{
+    #tego nie czytamy
+    def void main()
+    {
+        int a=10;
+        int b;
+        b=3;
+        a=a-b;
+        printint(a);
+        a=a/b;
+        printint(a);
+        a=a*a;
+        printint(a);
+        printint(a%3);
+        printbool(true);
+        printstring("string");
+    }
+}
